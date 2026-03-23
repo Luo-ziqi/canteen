@@ -9,6 +9,8 @@
 body {
     background-color: #f5f7fa;
     padding: 20px;
+    /* 小屏幕减少内边距 */
+    padding: clamp(10px, 3vw, 20px);
 }
 
 /* 根容器：BEM块 */
@@ -19,6 +21,8 @@ body {
     padding: 30px;
     border-radius: 8px;
     box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    /* 适配小屏幕内边距 */
+    padding: clamp(15px, 4vw, 30px);
 }
 
 /* 标题：BEM元素 */
@@ -26,7 +30,8 @@ body {
     text-align: center;
     color: #333;
     margin-bottom: 30px;
-    font-size: 28px;
+    /* 响应式字体大小 */
+    font-size: clamp(20px, 5vw, 28px);
 }
 
 /* 操作区：BEM元素 */
@@ -46,6 +51,9 @@ body {
     display: flex;
     flex-wrap: wrap;
     gap: 20px;
+    /* 表单最大宽度，小屏幕自适应 */
+    width: 100%;
+    margin-bottom: 15px;
 }
 
 /* 表单项：BEM元素 */
@@ -53,19 +61,25 @@ body {
     display: flex;
     flex-direction: column;
     gap: 6px;
+    /* 小屏幕表单项占比优化 */
+    flex: 1;
+    min-width: 120px;
 }
 
 .simulation__form-item label {
-    font-size: 14px;
+    font-size: clamp(12px, 2vw, 14px);
     color: #666;
 }
 
 .simulation__form-item input {
-    width: 120px;
+    /* 输入框自适应宽度 */
+    width: 100%;
+    min-width: 100px;
     padding: 8px 10px;
     border: 1px solid #dcdcdc;
     border-radius: 4px;
     outline: none;
+    font-size: clamp(12px, 2vw, 14px);
 }
 
 .simulation__form-item input:focus {
@@ -76,6 +90,9 @@ body {
 .simulation__btn-group {
     display: flex;
     gap: 15px;
+    /* 小屏幕按钮组居中 */
+    width: 100%;
+    justify-content: center;
 }
 
 /* 按钮：BEM元素 + 修饰符 */
@@ -83,9 +100,11 @@ body {
     padding: 10px 20px;
     border: none;
     border-radius: 4px;
-    font-size: 16px;
+    font-size: clamp(14px, 2vw, 16px);
     cursor: pointer;
     transition: all 0.3s;
+    /* 保证点击区域大小 */
+    min-width: 100px;
 }
 
 .simulation__btn--start {
@@ -115,7 +134,7 @@ body {
     padding: 0 10px;
     border-radius: 4px;
     margin-bottom: 20px;
-    font-size: 14px;
+    font-size: clamp(12px, 2vw, 14px);
     text-align: center;
     display: none;
 }
@@ -146,7 +165,8 @@ body {
 
 .simulation__realtime h2, .simulation__result h2 {
     color: #333;
-    font-size: 20px;
+    /* 响应式子标题字体 */
+    font-size: clamp(16px, 3vw, 20px);
     margin-bottom: 20px;
     border-left: 4px solid #1890ff;
     padding-left: 10px;
@@ -162,10 +182,12 @@ body {
 /* 图表容器：BEM元素 */
 .simulation__chart {
     flex: 1;
-    height: 400px;
+    /* 响应式图表高度 */
+    height: clamp(200px, 50vw, 400px);
     border: 1px solid #e8e8e8;
     border-radius: 6px;
     padding: 10px;
+    min-height: 200px;
 }
 
 /* 评价区：BEM元素 */
@@ -174,7 +196,7 @@ body {
     gap: 50px;
     justify-content: center;
     margin-top: 30px;
-    font-size: 18px;
+    font-size: clamp(14px, 3vw, 18px);
 }
 
 /* 评价项：BEM元素 */
@@ -195,7 +217,7 @@ body {
     margin-left: 10px;
 }
 
-/* 响应式适配 */
+/* 响应式适配：平板/大屏手机 */
 @media (max-width: 1200px) {
     .simulation__chart-group {
         flex-direction: column;
@@ -204,5 +226,41 @@ body {
         flex-direction: column;
         gap: 20px;
         align-items: flex-start;
+    }
+}
+
+/* 平板适配（768px） */
+@media (max-width: 768px) {
+    .simulation__form {
+        gap: 15px;
+    }
+    .simulation__btn-group {
+        gap: 10px;
+    }
+    .simulation__evaluation {
+        gap: 30px;
+    }
+}
+
+/* 手机适配（480px） */
+@media (max-width: 480px) {
+    .simulation__operate {
+        padding: 15px;
+    }
+    .simulation__btn {
+        padding: 8px 15px;
+        min-width: 80px;
+    }
+    .simulation__evaluation {
+        /* 手机端评价区改为纵向排列 */
+        flex-direction: column;
+        gap: 15px;
+        align-items: center;
+    }
+    .simulation__chart-group {
+        gap: 15px;
+    }
+    .simulation__realtime, .simulation__result {
+        margin-bottom: 20px;
     }
 }

@@ -41,4 +41,5 @@ TABLE_EVAL_THRESHOLD = 0.8
 LOG_LEVEL = logging.INFO
 # 日志格式：时间 - 模块 - 级别 - 消息
 LOG_FORMAT = "%(asctime)s - %(module)s - %(levelname)s - %(message)s"
-logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
+# 新增：设置日志时间格式
+logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT, datefmt="%Y-%m-%d %H:%M:%S")

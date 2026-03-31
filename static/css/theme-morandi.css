@@ -23,13 +23,13 @@
     --theme-info-dark: #b8d0ff;
     --theme-info-light: #c5d9ff;
 
-    /* ECharts 图表色系 - 6 阶渐变 */
-    --chart-series-1: #e1edff;
-    --chart-series-2: #d6e5ff;
-    --chart-series-3: #c5d9ff;
-    --chart-series-4: #b8d0ff;
-    --chart-series-5: #a9c6ff;
-    --chart-series-6: #8fb3e6;
+    /* ECharts 图表色系 - 6 阶渐变 (调整为较深色调) */
+    --chart-series-1: #c5d9ff;
+    --chart-series-2: #b8d0ff;
+    --chart-series-3: #a9c6ff;
+    --chart-series-4: #94b3e6;
+    --chart-series-5: #7fa3d9;
+    --chart-series-6: #6694cc;
 
     /* 中性色 */
     --text-primary: #2d3748;

@@ -46,7 +46,7 @@ const state = {
  */
 const getChartColors = () => {
   const styles = getComputedStyle(document.documentElement);
-  return {
+  const colors = {
     primary: styles.getPropertyValue('--chart-series-1').trim() || '#e1edff',    // 极浅蓝
     success: styles.getPropertyValue('--chart-series-2').trim() || '#d6e5ff',    // 浅蓝
     error: styles.getPropertyValue('--chart-series-3').trim() || '#c5d9ff',      // 中浅蓝
@@ -54,6 +54,84 @@ const getChartColors = () => {
     warning: styles.getPropertyValue('--chart-series-5').trim() || '#a9c6ff',    // 主蓝
     purple: styles.getPropertyValue('--chart-series-6').trim() || '#8fb3e6'      // 深蓝
   };
+  console.log('[Chart] getChartColors:', colors);
+  return colors;
+};
+
+/**
+ * 更新所有图表的颜色配置（响应主题变化）
+ */
+const updateChartColors = () => {
+  const newColors = getChartColors();
+
+  // 更新状态中的颜色引用
+  state.chartColors = newColors;
+
+  // 更新柱状图颜色
+  const windowBarOption = state.chartInstances.windowBar?.getOption();
+  if (windowBarOption) {
+    const newData = windowBarOption.series[0].data;
+    state.chartInstances.windowBar.setOption({
+      series: [{
+        data: newData,
+        itemStyle: {
+          color: (params) => newData[params.dataIndex] >= 20 ? newColors.error : newColors.success
+        }
+      }]
+    });
+  }
+
+  // 更新饼图颜色
+  const tablePieOption = state.chartInstances.tablePie?.getOption();
+  if (tablePieOption && tablePieOption.series[0]?.data) {
+    state.chartInstances.tablePie.setOption({
+      series: [{
+        data: tablePieOption.series[0].data.map(item => ({
+          name: item.name,
+          value: item.value,
+          itemStyle: {
+            color: item.name === '已使用桌子' ? newColors.error : newColors.info
+          }
+        }))
+      }]
+    });
+  }
+
+  // 更新窗口折线图颜色 - 使用 lineStyle 而非 color
+  const windowLineOption = state.chartInstances.windowLine?.getOption();
+  if (windowLineOption && windowLineOption.series && windowLineOption.series.length > 0) {
+    const chartColorsArray = [
+      newColors.primary, newColors.success, newColors.error,
+      newColors.info, newColors.warning, newColors.purple
+    ];
+    state.chartInstances.windowLine.setOption({
+      series: windowLineOption.series.map((s, i) => ({
+        ...s,
+        lineStyle: {
+          color: chartColorsArray[i % chartColorsArray.length]
+        }
+      }))
+    });
+  }
+
+  // 更新桌子折线图颜色
+  const tableLineOption = state.chartInstances.tableLine?.getOption();
+  if (tableLineOption && tableLineOption.series && tableLineOption.series.length >= 2) {
+    state.chartInstances.tableLine.setOption({
+      series: [
+        {
+          ...tableLineOption.series[0],
+          lineStyle: { color: newColors.error }
+        },
+        {
+          ...tableLineOption.series[1],
+          lineStyle: { color: newColors.info }
+        }
+      ]
+    });
+  }
+
+  console.log(`[Chart] 颜色已更新为：`, newColors);
 };
 
 const initElements = () => {
@@ -412,6 +490,13 @@ const bindEvents = () => {
     e.preventDefault();
     handleStartSimulation();
   });
+
+  // 监听主题变更事件，更新图表颜色
+  // 使用 once: false 确保可以多次触发
+  document.addEventListener('themeChange', () => {
+    console.log('[Index] 收到 themeChange 事件');
+    updateChartColors();
+  }, { passive: true });
 };
 
 const destroyResources = () => {

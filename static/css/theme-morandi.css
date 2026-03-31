@@ -1,0 +1,55 @@
+/* 莫兰迪蓝色系主题 */
+:root[class~="theme-morandi"] {
+    /* 品牌色系 */
+    --theme-primary: #a9c6ff;
+    --theme-primary-light: #b8d0ff;
+    --theme-primary-dark: #94b3e6;
+    --theme-primary-pale: #eef5ff;
+
+    /* 功能色 */
+    --theme-success: #b8d0ff;
+    --theme-success-dark: #a9c6ff;
+    --theme-success-light: #d6e5ff;
+
+    --theme-error: #c5d9ff;
+    --theme-error-dark: #b8d0ff;
+    --theme-error-light: #e1edff;
+
+    --theme-warning: #b8d0ff;
+    --theme-warning-dark: #a9c6ff;
+    --theme-warning-light: #d6e5ff;
+
+    --theme-info: #a9c6ff;
+    --theme-info-dark: #b8d0ff;
+    --theme-info-light: #c5d9ff;
+
+    /* ECharts 图表色系 - 6 阶渐变 */
+    --chart-series-1: #e1edff;
+    --chart-series-2: #d6e5ff;
+    --chart-series-3: #c5d9ff;
+    --chart-series-4: #b8d0ff;
+    --chart-series-5: #a9c6ff;
+    --chart-series-6: #8fb3e6;
+
+    /* 中性色 */
+    --text-primary: #2d3748;
+    --text-regular: #4a5568;
+    --text-secondary: #718096;
+    --text-disabled: #a0aec0;
+
+    --bg-primary: #eef5ff;
+    --bg-secondary: #e1edff;
+    --bg-tertiary: #d6e5ff;
+
+    --border-light: #e1edff;
+    --border-regular: #d6e5ff;
+    --border-dark: #c5d9ff;
+
+    /* 阴影 */
+    --shadow-light: rgba(169, 198, 255, 0.1);
+    --shadow-regular: rgba(169, 198, 255, 0.15);
+    --shadow-medium: rgba(169, 198, 255, 0.2);
+    --shadow-strong: rgba(169, 198, 255, 0.25);
+    --shadow-hover: rgba(169, 198, 255, 0.3);
+    --shadow-active: rgba(169, 198, 255, 0.4);
+}

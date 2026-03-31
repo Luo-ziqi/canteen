@@ -1,0 +1,55 @@
+/* 薰衣草紫主题 */
+:root[class~="theme-lavender"] {
+    /* 品牌色系 */
+    --theme-primary: #b39ddb;
+    --theme-primary-light: #c5b1e6;
+    --theme-primary-dark: #9575cd;
+    --theme-primary-pale: #f3e5f5;
+
+    /* 功能色 */
+    --theme-success: #c5b1e6;
+    --theme-success-dark: #b39ddb;
+    --theme-success-light: #e8dff5;
+
+    --theme-error: #ef9a9a;
+    --theme-error-dark: #e57373;
+    --theme-error-light: #fce4ec;
+
+    --theme-warning: #ffe082;
+    --theme-warning-dark: #ffd54f;
+    --theme-warning-light: #fff8e1;
+
+    --theme-info: #bae6fd;
+    --theme-info-dark: #91d5ff;
+    --theme-info-light: #e6f7ff;
+
+    /* ECharts 图表色系 - 6 阶渐变 */
+    --chart-series-1: #f3e5f5;
+    --chart-series-2: #e8dff5;
+    --chart-series-3: #d1c4e9;
+    --chart-series-4: #b39ddb;
+    --chart-series-5: #9575cd;
+    --chart-series-6: #7e57c2;
+
+    /* 中性色 */
+    --text-primary: #4a3f5a;
+    --text-regular: #5d4e6b;
+    --text-secondary: #786585;
+    --text-disabled: #9c8ba5;
+
+    --bg-primary: #f3e5f5;
+    --bg-secondary: #e8dff5;
+    --bg-tertiary: #d1c4e9;
+
+    --border-light: #e8dff5;
+    --border-regular: #d1c4e9;
+    --border-dark: #b39ddb;
+
+    /* 阴影 */
+    --shadow-light: rgba(179, 157, 219, 0.1);
+    --shadow-regular: rgba(179, 157, 219, 0.15);
+    --shadow-medium: rgba(179, 157, 219, 0.2);
+    --shadow-strong: rgba(179, 157, 219, 0.25);
+    --shadow-hover: rgba(179, 157, 219, 0.3);
+    --shadow-active: rgba(179, 157, 219, 0.4);
+}

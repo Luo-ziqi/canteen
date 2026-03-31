@@ -76,8 +76,8 @@ export const startSimulation = (params) => {
  * 无入参：后端通过session识别当前运行的仿真实例
  * @returns {Promise} - 后端响应结果（含仿真趋势数据和评价）
  */
-export const endSimulation = () => {
-  return fetchPost("/api/end-simulation")
+export const endSimulation = (data) => {
+  return fetchPost("/api/end-simulation", data)
     .catch(error => {
       console.error("结束仿真接口异常：", error);
       return Promise.reject(error);

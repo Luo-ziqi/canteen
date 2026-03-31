@@ -38,100 +38,116 @@ const state = {
     tableEval: null
   },
   sessionId: null,
-  chartColors: {}
+  chartColors: {},
+
+  // 图表数据缓存
+  chartData: {
+    windowPeople: [],
+    usedTable: 0,
+    remainingTable: 0,
+    windowTrend: [],
+    tableTrend: []
+  },
+
+  // 合帧更新状态
+  renderState: {
+    frameId: 0,
+    pending: {
+      windowBar: false,
+      tablePie: false,
+      windowLine: false,
+      tableLine: false
+    }
+  },
+
+  // 事件引用，便于销毁
+  handlers: {
+    resize: null,
+    themeChange: null,
+    unload: null,
+    formSubmit: null
+  }
 };
 
 /**
- * 从 CSS 变量获取图表颜色（样式与逻辑分离）
+ * 从 CSS 变量获取图表颜色
  */
 const getChartColors = () => {
   const styles = getComputedStyle(document.documentElement);
   const colors = {
-    primary: styles.getPropertyValue('--chart-series-1').trim() || '#e1edff',    // 极浅蓝
-    success: styles.getPropertyValue('--chart-series-2').trim() || '#d6e5ff',    // 浅蓝
-    error: styles.getPropertyValue('--chart-series-3').trim() || '#c5d9ff',      // 中浅蓝
-    info: styles.getPropertyValue('--chart-series-4').trim() || '#b8d0ff',       // 中蓝
-    warning: styles.getPropertyValue('--chart-series-5').trim() || '#a9c6ff',    // 主蓝
-    purple: styles.getPropertyValue('--chart-series-6').trim() || '#8fb3e6'      // 深蓝
+    primary: styles.getPropertyValue("--chart-series-1").trim() || "#e1edff",
+    success: styles.getPropertyValue("--chart-series-2").trim() || "#d6e5ff",
+    error: styles.getPropertyValue("--chart-series-3").trim() || "#c5d9ff",
+    info: styles.getPropertyValue("--chart-series-4").trim() || "#b8d0ff",
+    warning: styles.getPropertyValue("--chart-series-5").trim() || "#a9c6ff",
+    purple: styles.getPropertyValue("--chart-series-6").trim() || "#8fb3e6"
   };
-  console.log('[Chart] getChartColors:', colors);
+  console.log("[Chart] getChartColors:", colors);
   return colors;
 };
 
 /**
- * 更新所有图表的颜色配置（响应主题变化）
+ * 合并更新参数
+ */
+const getSetOptionOpts = (extra = {}) => ({
+  lazyUpdate: true,
+  silent: true,
+  ...extra
+});
+
+/**
+ * 请求下一帧渲染
+ */
+const requestChartRender = (chartKey) => {
+  state.renderState.pending[chartKey] = true;
+
+  if (state.renderState.frameId) return;
+
+  state.renderState.frameId = requestAnimationFrame(() => {
+    state.renderState.frameId = 0;
+    flushChartRender();
+  });
+};
+
+/**
+ * 执行图表渲染
+ */
+const flushChartRender = () => {
+  const { pending } = state.renderState;
+
+  if (pending.windowBar) {
+    renderWindowBarChart();
+    pending.windowBar = false;
+  }
+
+  if (pending.tablePie) {
+    renderTablePieChart();
+    pending.tablePie = false;
+  }
+
+  if (pending.windowLine) {
+    renderWindowLineChart();
+    pending.windowLine = false;
+  }
+
+  if (pending.tableLine) {
+    renderTableLineChart();
+    pending.tableLine = false;
+  }
+};
+
+/**
+ * 更新所有图表颜色（响应主题变化）
  */
 const updateChartColors = () => {
-  const newColors = getChartColors();
+  state.chartColors = getChartColors();
 
-  // 更新状态中的颜色引用
-  state.chartColors = newColors;
+  requestChartRender("windowBar");
+  requestChartRender("tablePie");
+  requestChartRender("windowLine");
+  requestChartRender("tableLine");
 
-  // 更新柱状图颜色
-  const windowBarOption = state.chartInstances.windowBar?.getOption();
-  if (windowBarOption) {
-    const newData = windowBarOption.series[0].data;
-    state.chartInstances.windowBar.setOption({
-      series: [{
-        data: newData,
-        itemStyle: {
-          color: (params) => newData[params.dataIndex] >= 20 ? newColors.error : newColors.success
-        }
-      }]
-    });
-  }
-
-  // 更新饼图颜色
-  const tablePieOption = state.chartInstances.tablePie?.getOption();
-  if (tablePieOption && tablePieOption.series[0]?.data) {
-    state.chartInstances.tablePie.setOption({
-      series: [{
-        data: tablePieOption.series[0].data.map(item => ({
-          name: item.name,
-          value: item.value,
-          itemStyle: {
-            color: item.name === '已使用桌子' ? newColors.error : newColors.info
-          }
-        }))
-      }]
-    });
-  }
-
-  // 更新窗口折线图颜色 - 使用 lineStyle 而非 color
-  const windowLineOption = state.chartInstances.windowLine?.getOption();
-  if (windowLineOption && windowLineOption.series && windowLineOption.series.length > 0) {
-    const chartColorsArray = [
-      newColors.primary, newColors.success, newColors.error,
-      newColors.info, newColors.warning, newColors.purple
-    ];
-    state.chartInstances.windowLine.setOption({
-      series: windowLineOption.series.map((s, i) => ({
-        ...s,
-        lineStyle: {
-          color: chartColorsArray[i % chartColorsArray.length]
-        }
-      }))
-    });
-  }
-
-  // 更新桌子折线图颜色
-  const tableLineOption = state.chartInstances.tableLine?.getOption();
-  if (tableLineOption && tableLineOption.series && tableLineOption.series.length >= 2) {
-    state.chartInstances.tableLine.setOption({
-      series: [
-        {
-          ...tableLineOption.series[0],
-          lineStyle: { color: newColors.error }
-        },
-        {
-          ...tableLineOption.series[1],
-          lineStyle: { color: newColors.info }
-        }
-      ]
-    });
-  }
-
-  console.log(`[Chart] 颜色已更新为：`, newColors);
+  console.log("[Chart] 颜色已更新为：", state.chartColors);
 };
 
 const initElements = () => {
@@ -147,7 +163,7 @@ const initElements = () => {
 
   Object.entries(state.elements).forEach(([key, el]) => {
     if (!el) {
-      console.error(`页面元素未找到：#${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`);
+      console.error(`页面元素未找到：#${key.replace(/([A-Z])/g, "-$1").toLowerCase()}`);
     }
   });
 
@@ -164,7 +180,9 @@ const showTip = (type, msg) => {
 
   if (type === "success") {
     setTimeout(() => {
-      tipBox.style.display = "none";
+      if (state.elements.tipBox) {
+        state.elements.tipBox.style.display = "none";
+      }
     }, 3000);
   }
 };
@@ -184,11 +202,11 @@ const getAndCheckFormParams = () => {
 
   const formData = new FormData(simulationForm);
   const params = {
-    dining_time: parseInt(formData.get("dining_time") || 0),
-    meal_time: parseInt(formData.get("meal_time") || 0),
-    max_people: parseInt(formData.get("max_people") || 0),
-    window_num: parseInt(formData.get("window_num") || 1),
-    table_num: parseInt(formData.get("table_num") || 1)
+    dining_time: parseInt(formData.get("dining_time") || 0, 10),
+    meal_time: parseInt(formData.get("meal_time") || 0, 10),
+    max_people: parseInt(formData.get("max_people") || 0, 10),
+    window_num: parseInt(formData.get("window_num") || 1, 10),
+    table_num: parseInt(formData.get("table_num") || 1, 10)
   };
 
   for (const [key, value] of Object.entries(params)) {
@@ -201,16 +219,63 @@ const getAndCheckFormParams = () => {
       return false;
     }
   }
+
   if (params.window_num < 1) {
     showTip("error", "窗口数不能小于 1");
     return false;
   }
+
   if (params.table_num < 1) {
     showTip("error", "桌子数不能小于 1");
     return false;
   }
 
   return params;
+};
+
+/**
+ * 重置图表数据（不 clear，不销毁配置）
+ */
+const resetChartsForNewSimulation = () => {
+  state.chartData.windowPeople = [];
+  state.chartData.usedTable = 0;
+  state.chartData.remainingTable = 0;
+  state.chartData.windowTrend = [];
+  state.chartData.tableTrend = [];
+
+  state.chartInstances.windowBar?.setOption({
+    xAxis: { data: [] },
+    series: [{
+      id: "window-bar-series",
+      data: []
+    }]
+  }, getSetOptionOpts());
+
+  state.chartInstances.tablePie?.setOption({
+    series: [{
+      id: "table-pie-series",
+      data: []
+    }]
+  }, getSetOptionOpts());
+
+  state.chartInstances.windowLine?.setOption({
+    xAxis: { data: [] },
+    series: []
+  }, getSetOptionOpts({ replaceMerge: ["series"] }));
+
+  state.chartInstances.tableLine?.setOption({
+    xAxis: { data: [] },
+    series: [
+      {
+        id: "table-line-used",
+        data: []
+      },
+      {
+        id: "table-line-remaining",
+        data: []
+      }
+    ]
+  }, getSetOptionOpts({ replaceMerge: ["series"] }));
 };
 
 const initECharts = () => {
@@ -226,20 +291,51 @@ const initECharts = () => {
     const titleFontSize = isMobile ? 12 : 18;
 
     return {
+      animation: true,
+      animationThreshold: 1500,
+      animationDuration: 300,
+      animationDurationUpdate: 220,
+      animationEasing: "cubicOut",
+      animationEasingUpdate: "cubicOut",
+
       ...baseOption,
-      title: { ...baseOption.title, textStyle: { fontSize: titleFontSize } },
-      legend: { ...baseOption.legend, textStyle: { fontSize } },
-      tooltip: { ...baseOption.tooltip, textStyle: { fontSize } },
-      xAxis: { 
-        ...baseOption.xAxis, 
-        nameTextStyle: { fontSize }, 
-        axisLabel: { fontSize: fontSize - 1 } 
+      title: {
+        ...(baseOption.title || {}),
+        textStyle: { fontSize: titleFontSize }
       },
-      yAxis: { 
-        ...baseOption.yAxis, 
-        nameTextStyle: { fontSize }, 
-        axisLabel: { fontSize: fontSize - 1 } 
-      }
+      legend: {
+        ...(baseOption.legend || {}),
+        textStyle: { fontSize }
+      },
+      tooltip: {
+        ...(baseOption.tooltip || {}),
+        textStyle: { fontSize }
+      },
+
+      ...(baseOption.xAxis && {
+        xAxis: {
+          ...baseOption.xAxis,
+          type: baseOption.xAxis.type || "category",
+          nameTextStyle: { fontSize },
+          axisLabel: { fontSize: fontSize - 1 }
+        }
+      }),
+
+      ...(baseOption.yAxis && {
+        yAxis: {
+          ...baseOption.yAxis,
+          type: baseOption.yAxis.type || "value",
+          nameTextStyle: { fontSize },
+          axisLabel: { fontSize: fontSize - 1 }
+        }
+      }),
+
+      ...(baseOption.series && {
+        series: baseOption.series.map((s) => ({
+          ...s,
+          type: s.type || "line"
+        }))
+      })
     };
   };
 
@@ -248,7 +344,13 @@ const initECharts = () => {
     title: { text: "各窗口当前等待人数", left: "center" },
     xAxis: { type: "category", data: [], name: "窗口编号" },
     yAxis: { type: "value", name: "等待人数", min: 0 },
-    series: [{ type: "bar", data: [], itemStyle: { color: state.chartColors.success } }],
+    series: [{
+      id: "window-bar-series",
+      type: "bar",
+      data: [],
+      barMaxWidth: 28,
+      itemStyle: { color: state.chartColors.success }
+    }],
     tooltip: { trigger: "axis" }
   }));
 
@@ -258,6 +360,7 @@ const initECharts = () => {
     tooltip: { trigger: "item" },
     legend: { orient: "vertical", left: "left", top: "center" },
     series: [{
+      id: "table-pie-series",
       name: "桌子数",
       type: "pie",
       radius: ["40%", "70%"],
@@ -271,7 +374,19 @@ const initECharts = () => {
     title: { text: "各窗口排队人数变化趋势", left: "center" },
     xAxis: { type: "category", data: [], name: "仿真时间 (秒)" },
     yAxis: { type: "value", name: "等待人数", min: 0 },
-    series: [],
+    series: [{
+      id: "window-line-1",
+      name: "窗口1",
+      type: "line",
+      data: [],
+      smooth: 0.25,
+      showSymbol: false,
+      symbol: "none",
+      lineStyle: {
+        color: state.chartColors.primary,
+        width: 2
+      }
+    }],
     tooltip: { trigger: "axis" },
     legend: { top: "bottom" }
   }));
@@ -282,109 +397,222 @@ const initECharts = () => {
     xAxis: { type: "category", data: [], name: "仿真时间 (秒)" },
     yAxis: { type: "value", name: "桌子数", min: 0 },
     series: [
-      { name: "已使用桌子", type: "line", data: [], color: state.chartColors.error },
-      { name: "剩余桌子", type: "line", data: [], color: state.chartColors.info }
+      {
+        id: "table-line-used",
+        name: "已使用桌子",
+        type: "line",
+        data: [],
+        smooth: 0.2,
+        showSymbol: false,
+        symbol: "none",
+        lineStyle: {
+          color: state.chartColors.error,
+          width: 2
+        }
+      },
+      {
+        id: "table-line-remaining",
+        name: "剩余桌子",
+        type: "line",
+        data: [],
+        smooth: 0.2,
+        showSymbol: false,
+        symbol: "none",
+        lineStyle: {
+          color: state.chartColors.info,
+          width: 2
+        }
+      }
     ],
     tooltip: { trigger: "axis" },
     legend: { top: "bottom" }
   }));
 
   let resizeTimer = null;
-  window.addEventListener("resize", () => {
+  state.handlers.resize = () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
-      if (state.chartInstances.windowBar) {
-        state.chartInstances.windowBar.setOption(getBaseOption(state.chartInstances.windowBar.getOption()));
+      try {
+        Object.values(state.chartInstances).forEach((ins) => ins?.resize());
+      } catch (error) {
+        console.error("[Chart] Resize error:", error);
       }
-      if (state.chartInstances.tablePie) {
-        state.chartInstances.tablePie.setOption(getBaseOption(state.chartInstances.tablePie.getOption()));
-      }
-      if (state.chartInstances.windowLine) {
-        state.chartInstances.windowLine.setOption(getBaseOption(state.chartInstances.windowLine.getOption()));
-      }
-      if (state.chartInstances.tableLine) {
-        state.chartInstances.tableLine.setOption(getBaseOption(state.chartInstances.tableLine.getOption()));
-      }
-      Object.values(state.chartInstances).forEach(ins => ins?.resize());
     }, 100);
-  });
+  };
+
+  window.addEventListener("resize", state.handlers.resize);
 };
 
-const updateWindowBarChart = (windowPeople) => {
+/**
+ * 实际渲染：窗口柱状图
+ */
+const renderWindowBarChart = () => {
   const chart = state.chartInstances.windowBar;
+  const windowPeople = state.chartData.windowPeople;
   if (!chart || !Array.isArray(windowPeople)) return;
 
   const xAxisData = windowPeople.map((_, index) => `窗口${index + 1}`);
-  const itemStyle = {
-    color: (params) => windowPeople[params.dataIndex] >= 20 ? state.chartColors.error : state.chartColors.success
-  };
 
   chart.setOption({
     xAxis: { data: xAxisData },
-    series: [{ data: windowPeople, itemStyle }]
-  });
+    yAxis: { min: 0 },
+    series: [{
+      id: "window-bar-series",
+      data: windowPeople,
+      itemStyle: {
+        color: (params) =>
+          windowPeople[params.dataIndex] >= 20
+            ? state.chartColors.error
+            : state.chartColors.success
+      }
+    }]
+  }, getSetOptionOpts());
+};
+
+/**
+ * 实际渲染：桌子饼图
+ */
+const renderTablePieChart = () => {
+  const chart = state.chartInstances.tablePie;
+  if (!chart) return;
+
+  const pieData = [
+    {
+      name: "已使用桌子",
+      value: state.chartData.usedTable,
+      itemStyle: { color: state.chartColors.error }
+    },
+    {
+      name: "剩余桌子",
+      value: state.chartData.remainingTable,
+      itemStyle: { color: state.chartColors.info }
+    }
+  ];
+
+  chart.setOption({
+    series: [{
+      id: "table-pie-series",
+      data: pieData
+    }]
+  }, getSetOptionOpts());
+};
+
+/**
+ * 实际渲染：窗口折线图
+ */
+const renderWindowLineChart = () => {
+  const chart = state.chartInstances.windowLine;
+  const windowTrend = state.chartData.windowTrend;
+  if (!chart || !Array.isArray(windowTrend) || windowTrend.length === 0) return;
+
+  const xAxisData = windowTrend.map((item) => item.time);
+  const windowNum = windowTrend[0]?.people?.length || 0;
+
+  const chartColors = [
+    state.chartColors.primary,
+    state.chartColors.success,
+    state.chartColors.error,
+    state.chartColors.info,
+    state.chartColors.warning,
+    state.chartColors.purple
+  ];
+
+  const seriesData = Array.from({ length: windowNum }, (_, i) => ({
+    id: `window-line-${i + 1}`,
+    name: `窗口${i + 1}`,
+    type: "line",
+    data: windowTrend.map((item) => item.people?.[i] || 0),
+    smooth: 0.25,
+    showSymbol: false,
+    symbol: "none",
+    sampling: "lttb",
+    lineStyle: {
+      color: chartColors[i % chartColors.length],
+      width: 2
+    }
+  }));
+
+  const needReplaceSeries = chart.__windowSeriesCount !== windowNum;
+  chart.__windowSeriesCount = windowNum;
+
+  chart.setOption({
+    xAxis: { data: xAxisData },
+    yAxis: { min: 0 },
+    animationDurationUpdate: 180,
+    animationEasingUpdate: "linear",
+    series: seriesData
+  }, needReplaceSeries
+    ? getSetOptionOpts({ replaceMerge: ["series"] })
+    : getSetOptionOpts()
+  );
+};
+
+/**
+ * 实际渲染：桌子折线图
+ */
+const renderTableLineChart = () => {
+  const chart = state.chartInstances.tableLine;
+  const tableTrend = state.chartData.tableTrend;
+  if (!chart || !Array.isArray(tableTrend) || tableTrend.length === 0) return;
+
+  const xAxisData = tableTrend.map((item) => item.time);
+  const usedData = tableTrend.map((item) => item.used || 0);
+  const remainingData = tableTrend.map((item) => item.remaining || 0);
+
+  chart.setOption({
+    xAxis: { data: xAxisData },
+    yAxis: { min: 0 },
+    animationDurationUpdate: 180,
+    animationEasingUpdate: "linear",
+    series: [
+      {
+        id: "table-line-used",
+        name: "已使用桌子",
+        data: usedData,
+        lineStyle: {
+          color: state.chartColors.error,
+          width: 2
+        }
+      },
+      {
+        id: "table-line-remaining",
+        name: "剩余桌子",
+        data: remainingData,
+        lineStyle: {
+          color: state.chartColors.info,
+          width: 2
+        }
+      }
+    ]
+  }, getSetOptionOpts());
+};
+
+/**
+ * 对外暴露：只负责缓存 + 请求渲染
+ */
+const updateWindowBarChart = (windowPeople) => {
+  if (!Array.isArray(windowPeople)) return;
+  state.chartData.windowPeople = windowPeople.slice();
+  requestChartRender("windowBar");
 };
 
 const updateTablePieChart = (usedTable, remainingTable) => {
-  const chart = state.chartInstances.tablePie;
-  if (!chart || typeof usedTable !== "number" || typeof remainingTable !== "number") return;
-
-  const pieData = [
-    { name: "已使用桌子", value: usedTable, itemStyle: { color: state.chartColors.error } },
-    { name: "剩余桌子", value: remainingTable, itemStyle: { color: state.chartColors.info } }
-  ];
-
-  chart.setOption({ series: [{ data: pieData }] });
+  if (typeof usedTable !== "number" || typeof remainingTable !== "number") return;
+  state.chartData.usedTable = usedTable;
+  state.chartData.remainingTable = remainingTable;
+  requestChartRender("tablePie");
 };
 
 const updateWindowLineChart = (windowTrend) => {
-  const chart = state.chartInstances.windowLine;
-  if (!chart || !Array.isArray(windowTrend) || windowTrend.length === 0) return;
-
-  const xAxisData = windowTrend.map(item => item.time);
-  const windowNum = windowTrend[0]?.people?.length || 0;
-  const seriesData = [];
-
-  // 为每个窗口分配不同颜色（由浅到深渐变）
-  const chartColors = [
-    state.chartColors.primary,    // 极浅蓝
-    state.chartColors.success,    // 浅蓝
-    state.chartColors.error,      // 中浅蓝
-    state.chartColors.info,       // 中蓝
-    state.chartColors.warning,    // 主蓝
-    state.chartColors.purple      // 深蓝
-  ];
-
-  for (let i = 0; i < windowNum; i++) {
-    seriesData.push({
-      name: `窗口${i + 1}`,
-      type: "line",
-      data: windowTrend.map(item => item.people[i] || 0),
-      color: chartColors[i % chartColors.length]  // 循环使用颜色
-    });
-  }
-
-  chart.setOption({
-    xAxis: { data: xAxisData },
-    series: seriesData
-  });
+  if (!Array.isArray(windowTrend)) return;
+  state.chartData.windowTrend = windowTrend.slice();
+  requestChartRender("windowLine");
 };
 
 const updateTableLineChart = (tableTrend) => {
-  const chart = state.chartInstances.tableLine;
-  if (!chart || !Array.isArray(tableTrend) || tableTrend.length === 0) return;
-
-  const xAxisData = tableTrend.map(item => item.time);
-  const usedData = tableTrend.map(item => item.used || 0);
-  const remainingData = tableTrend.map(item => item.remaining || 0);
-
-  chart.setOption({
-    xAxis: { data: xAxisData },
-    series: [
-      { name: "已使用桌子", data: usedData },
-      { name: "剩余桌子", data: remainingData }
-    ]
-  });
+  if (!Array.isArray(tableTrend)) return;
+  state.chartData.tableTrend = tableTrend.slice();
+  requestChartRender("tableLine");
 };
 
 const showEvaluation = (windowEval, tableEval) => {
@@ -393,6 +621,7 @@ const showEvaluation = (windowEval, tableEval) => {
 
   windowEvalEl.className = windowEval === "体验良好" ? "eval--good" : "eval--bad";
   windowEvalEl.innerText = windowEval || "未知";
+
   tableEvalEl.className = tableEval === "体验良好" ? "eval--good" : "eval--bad";
   tableEvalEl.innerText = tableEval || "未知";
 
@@ -406,10 +635,12 @@ window.updateTableLineChart = updateTableLineChart;
 window.showEvaluation = showEvaluation;
 
 const handleStartSimulation = async () => {
-  console.log("✅ 点击了启动仿真按钮（事件已触发）"); 
+  console.log("✅ 点击了启动仿真按钮（事件已触发）");
+
   const { startBtn, endBtn } = state.elements;
 
   if (state.isSimulating) return;
+
   if (!isSocketConnected) {
     showTip("error", "SocketIO 未连接，请检查后端服务");
     return;
@@ -429,19 +660,21 @@ const handleStartSimulation = async () => {
     console.log("📡 准备发送启动仿真请求，参数：", params);
     const res = await startSimulation(params);
     console.log("📡 后端响应：", res);
-    
+
     if (res?.success) {
       showTip("success", res.msg || "仿真启动成功");
-      
+
       if (res?.data?.session_id) {
         state.sessionId = res.data.session_id;
-        socket.emit('bind_session', res.data.session_id);
+        socket.emit("bind_session", res.data.session_id);
         console.log("🔗 Socket 绑定 session_id：", res.data.session_id);
       }
-      
-      state.elements.resultArea.style.display = "none";
-      state.chartInstances.windowBar?.clear();
-      state.chartInstances.tablePie?.clear();
+
+      if (state.elements.resultArea) {
+        state.elements.resultArea.style.display = "none";
+      }
+
+      resetChartsForNewSimulation();
     } else {
       throw new Error(res?.msg || "仿真启动失败");
     }
@@ -449,7 +682,7 @@ const handleStartSimulation = async () => {
     state.isSimulating = false;
     startBtn?.removeAttribute("disabled");
     endBtn?.setAttribute("disabled", true);
-    showTip("error", error.message);
+    showTip("error", error.message || "启动仿真失败");
     console.error("❌ 启动仿真失败：", error);
   }
 };
@@ -464,11 +697,17 @@ const handleEndSimulation = async () => {
 
   try {
     const res = await endSimulation({ session_id: state.sessionId });
+
     if (res?.success && res?.data) {
       showTip("success", "仿真结束成功，已生成结果分析");
+
       updateWindowLineChart(res.data.window_trend || []);
       updateTableLineChart(res.data.table_trend || []);
-      showEvaluation(res.data.window_evaluation || "", res.data.table_evaluation || "");
+      showEvaluation(
+        res.data.window_evaluation || "",
+        res.data.table_evaluation || ""
+      );
+
       state.isSimulating = false;
       startBtn?.removeAttribute("disabled");
       endBtn?.setAttribute("disabled", true);
@@ -476,9 +715,14 @@ const handleEndSimulation = async () => {
       throw new Error(res?.msg || "仿真结束失败");
     }
   } catch (error) {
-    showTip("error", error.message);
+    showTip("error", error.message || "结束仿真失败");
     console.error("❌ 结束仿真失败：", error);
   }
+};
+
+const handleFormSubmit = (e) => {
+  e.preventDefault();
+  handleStartSimulation();
 };
 
 const bindEvents = () => {
@@ -486,27 +730,55 @@ const bindEvents = () => {
 
   startBtn?.addEventListener("click", handleStartSimulation);
   endBtn?.addEventListener("click", handleEndSimulation);
-  simulationForm?.addEventListener("submit", (e) => {
-    e.preventDefault();
-    handleStartSimulation();
-  });
 
-  // 监听主题变更事件，更新图表颜色
-  // 使用 once: false 确保可以多次触发
-  document.addEventListener('themeChange', () => {
-    console.log('[Index] 收到 themeChange 事件');
+  state.handlers.formSubmit = handleFormSubmit;
+  simulationForm?.addEventListener("submit", state.handlers.formSubmit);
+
+  state.handlers.themeChange = () => {
+    console.log("[Index] 收到 themeChange 事件");
     updateChartColors();
-  }, { passive: true });
+  };
+
+  document.addEventListener("themeChange", state.handlers.themeChange, { passive: true });
+
+  state.handlers.unload = destroyResources;
+  window.addEventListener("unload", state.handlers.unload);
 };
 
 const destroyResources = () => {
-  socket.disconnect();
-  Object.values(state.chartInstances).forEach(ins => ins?.dispose());
-  state.isSimulating = false;
-  const { startBtn, endBtn, simulationForm } = state.elements;
-  startBtn?.removeEventListener("click", handleStartSimulation);
-  endBtn?.removeEventListener("click", handleEndSimulation);
-  simulationForm?.removeEventListener("submit", (e) => e.preventDefault());
+  try {
+    if (state.renderState.frameId) {
+      cancelAnimationFrame(state.renderState.frameId);
+      state.renderState.frameId = 0;
+    }
+
+    if (state.handlers.resize) {
+      window.removeEventListener("resize", state.handlers.resize);
+    }
+
+    if (state.handlers.themeChange) {
+      document.removeEventListener("themeChange", state.handlers.themeChange);
+    }
+
+    if (state.handlers.unload) {
+      window.removeEventListener("unload", state.handlers.unload);
+    }
+
+    const { startBtn, endBtn, simulationForm } = state.elements;
+    startBtn?.removeEventListener("click", handleStartSimulation);
+    endBtn?.removeEventListener("click", handleEndSimulation);
+
+    if (state.handlers.formSubmit) {
+      simulationForm?.removeEventListener("submit", state.handlers.formSubmit);
+    }
+
+    socket.disconnect();
+    Object.values(state.chartInstances).forEach((ins) => ins?.dispose());
+
+    state.isSimulating = false;
+  } catch (error) {
+    console.error("[Destroy] 资源销毁失败：", error);
+  }
 };
 
 const initPage = () => {
@@ -514,7 +786,6 @@ const initPage = () => {
     initElements();
     initECharts();
     bindEvents();
-    window.addEventListener("unload", destroyResources);
     console.log("✅ 页面初始化完成，事件绑定成功");
   } catch (error) {
     console.error("❌ 页面初始化失败：", error);

@@ -120,7 +120,7 @@ const ThemeManager = {
 
         // 更新 link 标签的 href
         if (themeLink) {
-            themeLink.setAttribute('href', `../css/${themeClass}.css`);
+            themeLink.setAttribute('href', `/static/css/${themeClass}.css`);
         }
 
         // 保存偏好

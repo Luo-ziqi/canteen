@@ -5,21 +5,39 @@ import random
 import time
 import threading
 import uuid
+import os
 
-app = Flask(__name__)
+# 获取当前脚本所在目录（app.py所在目录）
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_FOLDER = os.path.join(BASE_DIR, 'static')
+
+app = Flask(__name__, static_folder=STATIC_FOLDER, static_url_path='/static')
 app.config['SECRET_KEY'] = 'simulation-secret-key'
+
+# ========== Favicon 处理 ==========
+@app.route('/favicon.ico')
+def favicon():
+    return '', 204  # 返回 204 No Content，避免 404 错误
 
 # ========== 终极CORS修复：强制添加响应头 ==========
 @app.after_request
 def add_cors_headers(response):
     """强制为所有响应添加CORS头，覆盖SocketIO的polling请求"""
-    # 允许前端origin（localhost:5000和127.0.0.1:5000）
+    # 允许前端origin（支持localhost、127.0.0.1、局域网IP等所有5000端口访问）
     origin = request.headers.get('Origin')
-    allowed_origins = ['http://localhost:5000', 'http://127.0.0.1:5000']
-    if origin in allowed_origins:
+    allowed_origins = [
+        'http://localhost:5000', 
+        'http://127.0.0.1:5000',
+        'http://10.61.90.246:5000'  # 添加局域网IP支持
+    ]
+    
+    # 灵活检查：支持所有本地和局域网 IP 访问（端口5000）
+    if origin and origin.endswith(':5000'):
+        response.headers['Access-Control-Allow-Origin'] = origin
+    elif origin in allowed_origins:
         response.headers['Access-Control-Allow-Origin'] = origin
     else:
-        response.headers['Access-Control-Allow-Origin'] = '*'  # 测试阶段兜底
+        response.headers['Access-Control-Allow-Origin'] = 'http://127.0.0.1:5000'  # 默认允许本地
     
     # 必须的CORS头
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
@@ -31,7 +49,12 @@ def add_cors_headers(response):
 @app.route('/socket.io/<path:path>', methods=['OPTIONS'])
 def handle_socketio_options(path):
     response = make_response()
-    response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
+    origin = request.headers.get('Origin')
+    # 只有当origin以:5000结尾，才返回具体的origin（不能返回*，因为使用了credentials）
+    if origin and origin.endswith(':5000'):
+        response.headers['Access-Control-Allow-Origin'] = origin
+    else:
+        response.headers['Access-Control-Allow-Origin'] = 'http://127.0.0.1:5000'
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
     response.headers['Access-Control-Allow-Credentials'] = 'true'
@@ -39,12 +62,17 @@ def handle_socketio_options(path):
 
 # ========== 初始化SocketIO（兼容所有版本） ==========
 # 关键：降低SocketIO版本兼容，强制使用polling传输
+# CORS修复：不能使用"*"，改用列表 + 验证函数
+def cors_allowed_origins_func(origin):
+    """CORS origin 验证函数：允许所有以:5000结尾的origin（本地/局域网IP）"""
+    return origin.endswith(':5000') if origin else False
+
 socketio = SocketIO(
     app,
-    cors_allowed_origins="*",  # 允许所有来源
+    cors_allowed_origins=cors_allowed_origins_func,  # 使用验证函数而非通配符
     async_mode='threading',    # 异步模式避免阻塞
     ping_timeout=60,           # 延长超时
-    transports=['polling']     # 强制使用polling（避免websocket跨域问题）
+    transports=['websocket', 'polling']  # WebSocket优先（更高效），polling备选（兼容性）
 )
 
 # ========== 原有仿真逻辑（不变） ==========
@@ -94,11 +122,23 @@ def start_simulation():
     try:
         params = request.get_json()
         print("收到启动请求：", params)
+        print("请求Content-Type:", request.content_type)
+
+        if not params:
+            print("ERROR: params为None或空")
+            return jsonify({'success': False, 'msg': '请求体为空或不是JSON格式', 'data': None})
 
         required = ['dining_time', 'meal_time', 'max_people', 'window_num', 'table_num']
         for p in required:
-            if p not in params or not isinstance(params[p], int) or params[p] < 0:
-                return jsonify({'success': False, 'msg': f'参数{p}错误', 'data': None})
+            if p not in params:
+                print(f"ERROR: 缺少参数 {p}")
+                return jsonify({'success': False, 'msg': f'参数{p}缺失', 'data': None})
+            if not isinstance(params[p], int):
+                print(f"ERROR: 参数 {p} 类型错误，期望int，得到{type(params[p])}")
+                return jsonify({'success': False, 'msg': f'参数{p}必须是整数', 'data': None})
+            if params[p] < 0:
+                print(f"ERROR: 参数 {p} 为负数")
+                return jsonify({'success': False, 'msg': f'参数{p}不能为负数', 'data': None})
 
         session_id = str(uuid.uuid4())
         simulation_tasks[session_id] = {
@@ -125,7 +165,14 @@ def start_simulation():
 def end_simulation():
     try:
         data = request.get_json()
+        print("收到结束仿真请求：", data)
+        
+        if not data:
+            print("ERROR: data为None或空")
+            return jsonify({'success': False, 'msg': '请求体为空', 'data': None})
+        
         session_id = data.get('session_id')
+        print(f"提取的session_id: {session_id}")
 
         if not session_id or session_id not in simulation_tasks:
             return jsonify({'success': False, 'msg': '无运行中的仿真', 'data': None})
@@ -157,6 +204,14 @@ def bind_session(session_id):
     # 修复：用 request.sid 获取当前客户端的连接 ID
     print(f"客户端{request.sid}绑定session: {session_id}")
 # ========== 启动服务（关键：指定端口5000） ==========
+
+# ========== 添加根路由，返回 simulation.html ========== 
+from flask import send_from_directory
+
+@app.route('/')
+def index():
+    return send_from_directory('static/html', 'simulation.html')
+
 if __name__ == '__main__':
     socketio.run(
         app,

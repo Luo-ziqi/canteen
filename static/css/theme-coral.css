@@ -1,49 +1,49 @@
-/* 珊瑚橙主题 */
+/* 珊瑚橙色系主题 */
 :root[class~="theme-coral"] {
     /* 品牌色系 */
     --theme-primary: #ff8a65;
-    --theme-primary-light: #ffa180;
-    --theme-primary-dark: #f57c54;
-    --theme-primary-pale: #fff3e0;
+    --theme-primary-light: #ffa07a;
+    --theme-primary-dark: #f0704d;
+    --theme-primary-pale: #fff3ef;
 
     /* 功能色 */
-    --theme-success: #ffab91;
-    --theme-success-dark: #ff8a65;
-    --theme-success-light: #fbe9e7;
+    --theme-success: #81c784;
+    --theme-success-dark: #6ab36d;
+    --theme-success-light: #a5d6a7;
 
-    --theme-error: #ef5350;
-    --theme-error-dark: #e53935;
-    --theme-error-light: #ffebee;
+    --theme-error: #e57373;
+    --theme-error-dark: #d35d5d;
+    --theme-error-light: #f09898;
 
     --theme-warning: #ffb74d;
-    --theme-warning-dark: #ffa726;
-    --theme-warning-light: #fff3e0;
+    --theme-warning-dark: #f0a335;
+    --theme-warning-light: #ffcc80;
 
-    --theme-info: #80deea;
-    --theme-info-dark: #4dd0e1;
-    --theme-info-light: #e0f7fa;
+    --theme-info: #ff8a65;
+    --theme-info-dark: #f0704d;
+    --theme-info-light: #ffa07a;
 
-    /* ECharts 图表色系 - 6 阶渐变 (调整为较深色调) */
-    --chart-series-1: #ffccbc;
-    --chart-series-2: #ffab91;
-    --chart-series-3: #ff8a65;
-    --chart-series-4: #f57c54;
-    --chart-series-5: #e64a19;
-    --chart-series-6: #d84315;
+    /* ECharts 图表色系 - 6 阶渐变 */
+    --chart-series-1: #fff3ef;
+    --chart-series-2: #ffe5d9;
+    --chart-series-3: #ffd7c3;
+    --chart-series-4: #ff8a65;
+    --chart-series-5: #f0704d;
+    --chart-series-6: #e06040;
 
     /* 中性色 */
-    --text-primary: #5d4037;
-    --text-regular: #6d4c41;
-    --text-secondary: #8d6e63;
-    --text-disabled: #bcaaa4;
+    --text-primary: #2d3748;
+    --text-regular: #4a5568;
+    --text-secondary: #718096;
+    --text-disabled: #a0aec0;
 
-    --bg-primary: #fff3e0;
-    --bg-secondary: #fbe9e7;
-    --bg-tertiary: #ffccbc;
+    --bg-primary: #fffbf9;
+    --bg-secondary: #fff3ef;
+    --bg-tertiary: #ffe5d9;
 
-    --border-light: #fbe9e7;
-    --border-regular: #ffccbc;
-    --border-dark: #ffab91;
+    --border-light: #fff3ef;
+    --border-regular: #ffe5d9;
+    --border-dark: #ffd7c3;
 
     /* 阴影 */
     --shadow-light: rgba(255, 138, 101, 0.1);

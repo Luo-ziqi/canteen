@@ -2,129 +2,78 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>餐厅打饭仿真系统</title>
+    <!-- 引入ECharts CDN：适配图表渲染 -->
     <script src="/static/js/echarts.min.js"></script>
+    <!-- 引入SocketIO CDN：与后端实时通信 -->
     <script src="/static/js/socket_io.js"></script>
-    <script src="/static/js/marked.min.js"></script>
+    <!-- 引入基础样式（包含主题变量） -->
     <link rel="stylesheet" href="/static/css/base.css">
+    <!-- 引入当前主题样式 -->
     <link rel="stylesheet" href="/static/css/theme-morandi.css" id="active-theme">
-    <link rel="stylesheet" href="/static/css/simulation.css">
 </head>
-<body class="theme-morandi">
-    <div class="app-layout">
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar__header">
-                <h2>⚙️ 系统配置</h2>
+<body>
+    <div class="simulation-container">
+        <h1 class="simulation__title">✨ 餐厅打饭仿真系统 ✨</h1>
+        <!-- 操作区：参数表单 + 功能按钮 -->
+        <div class="simulation__operate">
+            <form class="simulation__form" id="simulationForm">
+                <div class="simulation__form-item">
+                    <label for="dining_time">平均用餐时间(分钟)：</label>
+                    <input type="number" id="dining_time" name="dining_time" min="0" required placeholder="如20">
+                </div>
+                <div class="simulation__form-item">
+                    <label for="meal_time">平均打饭时间(秒/人)：</label>
+                    <input type="number" id="meal_time" name="meal_time" min="0" required placeholder="如30">
+                </div>
+                <div class="simulation__form-item">
+                    <label for="max_people">每分钟最大进入人数：</label>
+                    <input type="number" id="max_people" name="max_people" min="0" required placeholder="如50">
+                </div>
+                <div class="simulation__form-item">
+                    <label for="window_num">窗口数：</label>
+                    <input type="number" id="window_num" name="window_num" min="1" required placeholder="如5">
+                </div>
+                <div class="simulation__form-item">
+                    <label for="table_num">桌子数：</label>
+                    <input type="number" id="table_num" name="table_num" min="1" required placeholder="如30">
+                </div>
+            </form>
+            <div class="simulation__btn-group">
+                <button class="simulation__btn simulation__btn--start" id="startBtn">🚀 启动仿真</button>
+                <button class="simulation__btn simulation__btn--end" id="endBtn" disabled>⏸️ 结束仿真</button>
             </div>
-            
-            <div class="sidebar__content">
-                <div class="sidebar__section">
-                    <h3 class="sidebar__section-title">🎯 仿真参数</h3>
-                    <form class="sidebar__form" id="simulationForm">
-                        <div class="sidebar__form-item">
-                            <label for="dining_time">平均用餐时间(分钟)</label>
-                            <input type="number" id="dining_time" name="dining_time" min="0" step="1" required placeholder="请输入正整数，如：20" class="sidebar__input">
-                        </div>
-                        <div class="sidebar__form-item">
-                            <label for="meal_time">平均打饭时间(秒/人)</label>
-                            <input type="number" id="meal_time" name="meal_time" min="0" step="1" required placeholder="请输入正整数，如：30" class="sidebar__input">
-                        </div>
-                        <div class="sidebar__form-item">
-                            <label for="max_people">每分钟最大进入人数</label>
-                            <input type="number" id="max_people" name="max_people" min="0" step="1" required placeholder="请输入正整数，如：50" class="sidebar__input">
-                        </div>
-                        <div class="sidebar__form-item">
-                            <label for="window_num">窗口数</label>
-                            <input type="number" id="window_num" name="window_num" min="1" step="1" required placeholder="请输入正整数，至少为1" class="sidebar__input">
-                        </div>
-                        <div class="sidebar__form-item">
-                            <label for="table_num">桌子数</label>
-                            <input type="number" id="table_num" name="table_num" min="1" step="1" required placeholder="请输入正整数，至少为1" class="sidebar__input">
-                        </div>
-                    </form>
-                </div>
+        </div>
 
-                <div class="sidebar__divider"></div>
+        <!-- 提示区：加载/成功/失败/异常提示 -->
+        <div class="simulation__tip" id="tipBox"></div>
 
-                <div class="sidebar__section">
-                    <h3 class="sidebar__section-title">🤖 AI配置</h3>
-                    <div class="sidebar__form-item">
-                        <label for="apiUrl">API接口地址</label>
-                        <input type="text" id="apiUrl" class="sidebar__input" placeholder="如：https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions">
-                    </div>
-                    <div class="sidebar__form-item">
-                        <label for="apiKey">API Key</label>
-                        <input type="password" id="apiKey" class="sidebar__input" placeholder="请输入您的API Key">
-                    </div>
-                    <div class="sidebar__form-item">
-                        <label for="modelUrl">模型名称</label>
-                        <input type="text" id="modelUrl" class="sidebar__input" placeholder="如：gpt-3.5-turbo">
-                    </div>
-                    <div class="sidebar__form-item">
-                        <button type="button" class="sidebar__btn sidebar__btn--test" id="testConnectionBtn">🔌 测试连通性</button>
-                    </div>
-                    <div class="sidebar__form-item">
-                        <label>AI提示词模式</label>
-                        <div class="sidebar__prompt-mode">
-                            <button type="button" class="sidebar__prompt-mode-btn active" data-mode="default">默认</button>
-                            <button type="button" class="sidebar__prompt-mode-btn" data-mode="custom">自定义</button>
-                        </div>
-                    </div>
-                    <div class="sidebar__form-item">
-                        <label for="aiPrompt">AI提示词</label>
-                        <textarea id="aiPrompt" class="sidebar__textarea sidebar__textarea--readonly" readonly placeholder="当前为默认模式，提示词已自动加载..."></textarea>
-                    </div>
-                </div>
-
-                <div class="sidebar__actions">
-                    <button class="sidebar__btn sidebar__btn--save" id="saveConfigBtn">💾 保存配置</button>
-                    <button class="sidebar__btn sidebar__btn--start" id="startBtn">🚀 启动仿真</button>
-                    <button class="sidebar__btn sidebar__btn--end" id="endBtn" disabled>⏸️ 结束仿真</button>
-                    <button class="sidebar__btn sidebar__btn--analyze" id="analyzeBtn" disabled>🤖 AI分析</button>
-                </div>
+        <!-- 实时展示区：窗口柱状图 + 桌子饼状图 -->
+        <div class="simulation__realtime">
+            <h2>📊 仿真实时状态</h2>
+            <div class="simulation__chart-group">
+                <div class="simulation__chart" id="windowBarChart"></div>
+                <div class="simulation__chart" id="tablePieChart"></div>
             </div>
-        </aside>
+        </div>
 
-        <main class="main-content" id="mainContent">
-            <div class="main-content__inner">
-                <h1 class="simulation__title">✨ 餐厅打饭仿真系统 ✨</h1>
-
-                <div class="simulation__tip" id="tipBox"></div>
-
-                <div class="simulation__realtime">
-                    <h2>📊 仿真实时状态</h2>
-                    <div class="simulation__chart" id="windowBarChart"></div>
-                    <div class="simulation__chart" id="tablePieChart"></div>
-                </div>
-
-                <div class="simulation__result" id="resultArea" style="display: block;">
-                    <h2>📈 仿真结果分析</h2>
-                    <div class="simulation__chart" id="windowLineChart"></div>
-                    <div class="simulation__chart" id="tableLineChart"></div>
-                    <div class="simulation__evaluation" id="evaluationBox">
-                        <div class="simulation__eval-item">窗口排队体验：<span id="windowEval"></span></div>
-                        <div class="simulation__eval-item">桌子占用体验：<span id="tableEval"></span></div>
-                    </div>
-                </div>
-
-                <div class="ai-result-section" id="aiResultSection">
-                    <h2>🤖 AI分析结果</h2>
-                    <div class="ai-result__loading" id="aiLoading" style="display: none;">
-                        <div class="ai-result__spinner"></div>
-                        <span>AI分析中，请稍候...</span>
-                    </div>
-                    <div class="ai-result__container" id="aiResultContainer">
-                        <div class="ai-result__content" id="aiResultContent"></div>
-                    </div>
-                </div>
+        <!-- 结果展示区：窗口折线图 + 桌子折线图 + 体验评价 -->
+        <div class="simulation__result" id="resultArea" style="display: block;">
+            <h2>📈 仿真结果分析</h2>
+            <div class="simulation__chart-group">
+                <div class="simulation__chart" id="windowLineChart"></div>
+                <div class="simulation__chart" id="tableLineChart"></div>
             </div>
-        </main>
+            <div class="simulation__evaluation" id="evaluationBox">
+                <div class="simulation__eval-item">窗口排队体验：<span id="windowEval"></span></div>
+                <div class="simulation__eval-item">桌子占用体验：<span id="tableEval"></span></div>
+            </div>
+        </div>
     </div>
 
 <script type="module" src="/static/js/config.js"></script>
 <script type="module" src="/static/js/api.js"></script>
-<script type="module" src="/static/js/ai.js"></script>
 <script type="module" src="/static/js/socket.js"></script>
 <script type="module" src="/static/js/theme.js"></script>
 <script type="module" src="/static/js/index.js"></script>

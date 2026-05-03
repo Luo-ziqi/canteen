@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>餐厅打饭仿真系统</title>
+    <!-- 引入ECharts CDN：适配图表渲染 -->
+    <script src="../js/echarts.min.js"></script>
+    <!-- 引入SocketIO CDN：与后端实时通信 -->
+    <script src="../js/socket_io.js"></script>
+    <!-- 引入本地样式文件 -->
+    <link rel="stylesheet" href="../css/simulation.css">
+</head>
+<body>
+    <div class="simulation-container">
+        <h1 class="simulation__title">餐厅打饭仿真系统</h1>
+        <!-- 操作区：参数表单 + 功能按钮 -->
+        <div class="simulation__operate">
+            <form class="simulation__form" id="simulationForm">
+                <div class="simulation__form-item">
+                    <label for="dining_time">平均用餐时间(分钟)：</label>
+                    <input type="number" id="dining_time" name="dining_time" min="0" required placeholder="如20">
+                </div>
+                <div class="simulation__form-item">
+                    <label for="meal_time">平均打饭时间(秒/人)：</label>
+                    <input type="number" id="meal_time" name="meal_time" min="0" required placeholder="如30">
+                </div>
+                <div class="simulation__form-item">
+                    <label for="max_people">每分钟最大进入人数：</label>
+                    <input type="number" id="max_people" name="max_people" min="0" required placeholder="如50">
+                </div>
+                <div class="simulation__form-item">
+                    <label for="window_num">窗口数：</label>
+                    <input type="number" id="window_num" name="window_num" min="1" required placeholder="如5">
+                </div>
+                <div class="simulation__form-item">
+                    <label for="table_num">桌子数：</label>
+                    <input type="number" id="table_num" name="table_num" min="1" required placeholder="如30">
+                </div>
+            </form>
+            <div class="simulation__btn-group">
+                <button class="simulation__btn simulation__btn--start" id="startBtn">启动仿真</button>
+                <button class="simulation__btn simulation__btn--end" id="endBtn" disabled>结束仿真</button>
+            </div>
+        </div>
+
+        <!-- 提示区：加载/成功/失败/异常提示 -->
+        <div class="simulation__tip" id="tipBox"></div>
+
+        <!-- 实时展示区：窗口柱状图 + 桌子饼状图 -->
+        <div class="simulation__realtime">
+            <h2>仿真实时状态</h2>
+            <div class="simulation__chart-group">
+                <div class="simulation__chart" id="windowBarChart"></div>
+                <div class="simulation__chart" id="tablePieChart"></div>
+            </div>
+        </div>
+
+        <!-- 结果展示区：窗口折线图 + 桌子折线图 + 体验评价 -->
+        <div class="simulation__result" id="resultArea" style="display: none;">
+            <h2>仿真结果分析</h2>
+            <div class="simulation__chart-group">
+                <div class="simulation__chart" id="windowLineChart"></div>
+                <div class="simulation__chart" id="tableLineChart"></div>
+            </div>
+            <div class="simulation__evaluation" id="evaluationBox">
+                <div class="simulation__eval-item">窗口排队体验：<span id="windowEval"></span></div>
+                <div class="simulation__eval-item">桌子占用体验：<span id="tableEval"></span></div>
+            </div>
+        </div>
+    </div>
+
+<script type="module" src="../js/api.js"></script>
+<script type="module" src="../js/socket.js"></script>
+<script type="module" src="../js/index.js"></script>
+</body>
+</html>

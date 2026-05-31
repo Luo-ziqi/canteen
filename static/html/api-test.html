@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>前端接口测试 — API Test Harness</title>
+<style>
+:root {
+  --bg: #f5f5f5;
+  --card-bg: #fff;
+  --text: #333;
+  --text-secondary: #666;
+  --border: #e0e0e0;
+  --success: #4caf50;
+  --error: #f44336;
+  --warning: #ff9800;
+  --info: #2196f3;
+  --running: #ff9800;
+  --shadow: 0 2px 8px rgba(0,0,0,.08);
+  --radius: 8px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+.header { background: #fff; padding: 16px 24px; box-shadow: var(--shadow); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.header h1 { font-size: 20px; font-weight: 600; }
+.header .base-url { font-size: 13px; color: var(--text-secondary); }
+.container { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
+.section { margin-bottom: 24px; }
+.section h2 { font-size: 16px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--info); }
+.test-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.test-card { background: var(--card-bg); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); cursor: pointer; transition: transform .15s, box-shadow .15s; border-left: 4px solid var(--border); }
+.test-card:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,.12); }
+.test-card .name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+.test-card .desc { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+.test-card .result { margin-top: 8px; font-size: 12px; font-weight: 600; display: none; }
+.test-card.pass { border-left-color: var(--success); background: #f1f8e9; }
+.test-card.pass .result { color: var(--success); display: block; }
+.test-card.fail { border-left-color: var(--error); background: #fce4ec; }
+.test-card.fail .result { color: var(--error); display: block; }
+.test-card.running { border-left-color: var(--running); background: #fff8e1; }
+.test-card.running .result { color: var(--running); display: block; }
+.panel { background: var(--card-bg); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); margin-bottom: 16px; }
+.panel label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; color: var(--text-secondary); }
+.panel input { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; margin-bottom: 10px; }
+.panel input:focus { border-color: var(--info); outline: none; box-shadow: 0 0 0 3px rgba(33,150,243,.15); }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { padding: 8px 20px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all .15s; }
+.btn-primary { background: var(--info); color: #fff; }
+.btn-primary:hover { background: #1976d2; }
+.btn-danger { background: var(--error); color: #fff; }
+.btn-danger:hover { background: #d32f2f; }
+.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+.btn-outline:hover { background: #f0f0f0; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.summary { display: flex; gap: 16px; flex-wrap: wrap; font-size: 14px; }
+.summary span { display: inline-flex; align-items: center; gap: 4px; }
+.summary .count { font-weight: 700; font-size: 18px; }
+.log-box { background: #1e1e1e; color: #d4d4d4; border-radius: var(--radius); padding: 12px 16px; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 12px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; line-height: 1.5; }
+.log-box .time { color: #858585; }
+.log-box .ok { color: #6a9955; }
+.log-box .err { color: #f44747; }
+.log-box .warn { color: #d7ba7d; }
+.log-box .info { color: #569cd6; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🔌 前端接口测试面板</h1>
+  <span class="base-url" id="baseUrlDisplay">http://127.0.0.1:5001</span>
+</div>
+
+<div class="container">
+
+  <!-- 配置面板 -->
+  <div class="panel" style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;">
+    <div style="flex:1;min-width:200px;">
+      <label for="baseUrlInput">后端地址</label>
+      <input id="baseUrlInput" value="http://127.0.0.1:5001" style="margin-bottom:0;">
+    </div>
+    <div style="flex:1;min-width:200px;">
+      <label for="apiKeyInput">API Key (可选鉴权)</label>
+      <input id="apiKeyInput" placeholder="留空跳过鉴权" style="margin-bottom:0;">
+    </div>
+    <div class="btn-row" style="align-self:flex-end;">
+      <button class="btn btn-outline" onclick="pingServer()">🔍 探测服务</button>
+      <button class="btn btn-primary" id="runAllBtn" onclick="runAllTests()">▶ 运行全部测试</button>
+    </div>
+  </div>
+
+  <!-- 统计摘要 -->
+  <div class="summary" style="margin-bottom:8px;">
+    <span>总计：<b class="count" id="totalCount">0</b></span>
+    <span style="color:var(--success);">✅ <b class="count" id="passCount">0</b></span>
+    <span style="color:var(--error);">❌ <b class="count" id="failCount">0</b></span>
+    <span style="color:var(--running);">⏳ <b class="count" id="runningCount">0</b></span>
+  </div>
+
+  <!-- 测试用例区 -->
+  <div class="section">
+    <h2>1️⃣ 启动仿真 API — /api/start-simulation</h2>
+    <div class="test-grid" id="startTests"></div>
+  </div>
+
+  <div class="section">
+    <h2>2️⃣ 结束仿真 API — /api/end-simulation</h2>
+    <div class="test-grid" id="endTests"></div>
+  </div>
+
+  <div class="section">
+    <h2>3️⃣ 其他端点 & 边界场景</h2>
+    <div class="test-grid" id="otherTests"></div>
+  </div>
+
+  <!-- 日志输出 -->
+  <div class="section">
+    <h2>📋 运行日志</h2>
+    <div class="log-box" id="logBox">等待运行测试...</div>
+  </div>
+
+</div>
+
+<script>
+const BASE = () => document.getElementById('baseUrlInput').value.trim().replace(/\/+$/, '');
+const API_KEY = () => document.getElementById('apiKeyInput').value.trim();
+const LOG = document.getElementById('logBox');
+
+let testResults = {};
+let sessionIds = []; // 跟踪创建的 session，用于清理
+
+function log(msg, cls = '') {
+  const time = new Date().toLocaleTimeString();
+  const prefix = `<span class="time">[${time}]</span> `;
+  LOG.innerHTML += prefix + (cls ? `<span class="${cls}">${msg}</span>` : msg) + '\n';
+  LOG.scrollTop = LOG.scrollHeight;
+}
+
+async function apiPost(url, data = {}) {
+  const headers = { 'Content-Type': 'application/json;charset=utf-8' };
+  const token = API_KEY();
+  if (token) headers['X-API-Token'] = token;
+
+  const resp = await fetch(`${BASE()}${url}`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(data),
+    credentials: 'include',
+  });
+  const body = await resp.json();
+  return { status: resp.status, body, headers: resp.headers };
+}
+
+async function runTest(id, fn) {
+  const card = document.getElementById(id);
+  if (!card) return;
+
+  card.classList.add('running');
+  card.classList.remove('pass', 'fail');
+  card.querySelector('.result').textContent = '⏳ 运行中...';
+  card.querySelector('.result').style.display = 'block';
+
+  const start = performance.now();
+  try {
+    await fn();
+    const elapsed = Math.round(performance.now() - start);
+    card.classList.add('pass');
+    card.classList.remove('running');
+    card.querySelector('.result').textContent = `✅ 通过 (${elapsed}ms)`;
+    testResults[id] = 'pass';
+    log(`✅ ${card.querySelector('.name').textContent} — ${elapsed}ms`, 'ok');
+  } catch (e) {
+    const elapsed = Math.round(performance.now() - start);
+    card.classList.add('fail');
+    card.classList.remove('running');
+    card.querySelector('.result').textContent = `❌ 失败: ${e.message}`;
+    testResults[id] = 'fail';
+    log(`❌ ${card.querySelector('.name').textContent} — ${e.message}`, 'err');
+  }
+  updateSummary();
+}
+
+function updateSummary() {
+  const total = Object.keys(testResults).length;
+  const pass = Object.values(testResults).filter(v => v === 'pass').length;
+  const fail = Object.values(testResults).filter(v => v === 'fail').length;
+  document.getElementById('totalCount').textContent = total;
+  document.getElementById('passCount').textContent = pass;
+  document.getElementById('failCount').textContent = fail;
+  document.getElementById('runningCount').textContent = total - pass - fail;
+}
+
+async function pingServer() {
+  log('🔍 探测后端服务...', 'info');
+  try {
+    const resp = await fetch(`${BASE()}/`, { method: 'GET' });
+    if (resp.ok) {
+      log('✅ 后端服务可达，状态码 ' + resp.status, 'ok');
+    } else {
+      log(`⚠️ 后端返回状态码 ${resp.status}`, 'warn');
+    }
+  } catch (e) {
+    log(`❌ 无法连接后端：${e.message}`, 'err');
+  }
+}
+
+function createTestCard(id, name, desc) {
+  return `<div class="test-card" id="${id}">
+    <div class="name">${name}</div>
+    <div class="desc">${desc}</div>
+    <div class="result"></div>
+  </div>`;
+}
+
+// ========== 测试用例定义 ==========
+
+function defineTests() {
+  // 1. 启动仿真测试
+  document.getElementById('startTests').innerHTML =
+    createTestCard('t1', '有效参数启动仿真', '正常参数应返回 success=true 和 session_id') +
+    createTestCard('t2', '缺少必填参数', '缺少 dining_time 应返回错误') +
+    createTestCard('t3', '非整数参数', '传入字符串参数应返回错误') +
+    createTestCard('t4', '负数参数', '传入负数应返回错误') +
+    createTestCard('t5', '空请求体', 'POST 空 body 应返回错误') +
+    createTestCard('t6', '自动生成 session_id', '不传 session_id 时后端自动生成 UUID') +
+    createTestCard('t7', '响应格式校验', '响应必须包含 {success, msg, data}');
+
+  // 2. 结束仿真测试
+  document.getElementById('endTests').innerHTML =
+    createTestCard('t8', '有效 session 结束仿真', '结束后返回趋势数据和评价') +
+    createTestCard('t9', '不存在的 session', '传入不存在的 session_id 应返回错误') +
+    createTestCard('t10', '缺少 session_id', '不传 session_id 应返回错误') +
+    createTestCard('t11', '趋势数据格式校验', 'window_trend 中每项含 {time, people}');
+
+  // 3. 其他测试
+  document.getElementById('otherTests').innerHTML =
+    createTestCard('t12', 'CORS 响应头验证', 'API 响应包含 Access-Control-Allow-Origin 头') +
+    createTestCard('t13', '重复启动同一 session', '同一 session_id 不能重复启动') +
+    createTestCard('t14', '完整生命周期', '启动→运行2秒→结束→数据完整') +
+    createTestCard('t15', 'AI 代理参数校验', '缺少 api_url/api_key 应返回错误');
+}
+
+// ========== 测试实现 ==========
+
+async function t1() {
+  const sessionId = crypto.randomUUID();
+  sessionIds.push(sessionId);
+  const { status, body } = await apiPost('/api/start-simulation', {
+    dining_time: 20, meal_time: 5, max_people: 200,
+    window_num: 4, table_num: 100, session_id: sessionId,
+  });
+  if (status !== 200) throw new Error(`状态码 ${status}`);
+  if (!body.success) throw new Error(body.msg || 'success=false');
+  if (body.data?.session_id !== sessionId) throw new Error('session_id 不匹配');
+}
+
+async function t2() {
+  const { body } = await apiPost('/api/start-simulation', {
+    meal_time: 5, max_people: 200, window_num: 4, table_num: 100,
+    session_id: crypto.randomUUID(),
+  });
+  if (body.success) throw new Error('缺少参数应失败');
+}
+
+async function t3() {
+  const { body } = await apiPost('/api/start-simulation', {
+    dining_time: 'abc', meal_time: 5, max_people: 200,
+    window_num: 4, table_num: 100, session_id: crypto.randomUUID(),
+  });
+  if (body.success) throw new Error('非整数参数应失败');
+}
+
+async function t4() {
+  const { body } = await apiPost('/api/start-simulation', {
+    dining_time: -5, meal_time: 5, max_people: 200,
+    window_num: 4, table_num: 100, session_id: crypto.randomUUID(),
+  });
+  if (body.success) throw new Error('负数参数应失败');
+}
+
+async function t5() {
+  const resp = await fetch(`${BASE()}/api/start-simulation`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: 'null',
+  });
+  const body = await resp.json();
+  if (body.success) throw new Error('空请求体应失败');
+}
+
+async function t6() {
+  const sessionId = crypto.randomUUID();
+  sessionIds.push(sessionId);
+  const { body } = await apiPost('/api/start-simulation', {
+    dining_time: 20, meal_time: 5, max_people: 200,
+    window_num: 4, table_num: 100, session_id: sessionId,
+  });
+  if (!body.success) throw new Error(body.msg);
+  if (!body.data?.session_id) throw new Error('缺少 session_id');
+}
+
+async function t7() {
+  const sessionId = crypto.randomUUID();
+  sessionIds.push(sessionId);
+  const { body } = await apiPost('/api/start-simulation', {
+    dining_time: 20, meal_time: 5, max_people: 200,
+    window_num: 4, table_num: 100, session_id: sessionId,
+  });
+  if (!('success' in body)) throw new Error('缺少 success 字段');
+  if (!('msg' in body)) throw new Error('缺少 msg 字段');
+  if (!('data' in body)) throw new Error('缺少 data 字段');
+}
+
+async function t8() {
+  const sessionId = crypto.randomUUID();
+  sessionIds.push(sessionId);
+  await apiPost('/api/start-simulation', {
+    dining_time: 20, meal_time: 5, max_people: 200,
+    window_num: 4, table_num: 100, session_id: sessionId,
+  });
+  await new Promise(r => setTimeout(r, 1500));
+  const { body } = await apiPost('/api/end-simulation', { session_id: sessionId });
+  if (!body.success) throw new Error(body.msg || '结束失败');
+  if (!body.data?.window_evaluation) throw new Error('缺少 window_evaluation');
+  const sidIdx = sessionIds.indexOf(sessionId);
+  if (sidIdx >= 0) sessionIds.splice(sidIdx, 1);
+}
+
+async function t9() {
+  const { body } = await apiPost('/api/end-simulation', {
+    session_id: 'nonexistent-xxxx-xxxx-xxxx',
+  });
+  if (body.success) throw new Error('不存在 session 应失败');
+}
+
+async function t10() {
+  const { body } = await apiPost('/api/end-simulation', {});
+  if (body.success) throw new Error('缺少 session_id 应失败');
+}
+
+async function t11() {
+  const sessionId = crypto.randomUUID();
+  sessionIds.push(sessionId);
+  await apiPost('/api/start-simulation', {
+    dining_time: 20, meal_time: 5, max_people: 200,
+    window_num: 4, table_num: 100, session_id: sessionId,
+  });
+  await new Promise(r => setTimeout(r, 2000));
+  const { body } = await apiPost('/api/end-simulation', { session_id: sessionId });
+  const trend = body.data?.window_trend;
+  if (trend && trend.length > 0) {
+    if (!('time' in trend[0])) throw new Error('window_trend 缺少 time');
+    if (!('people' in trend[0])) throw new Error('window_trend 缺少 people');
+  }
+  const sidIdx = sessionIds.indexOf(sessionId);
+  if (sidIdx >= 0) sessionIds.splice(sidIdx, 1);
+}
+
+async function t12() {
+  const sessionId = crypto.randomUUID();
+  sessionIds.push(sessionId);
+  const resp = await fetch(`${BASE()}/api/start-simulation`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      dining_time: 20, meal_time: 5, max_people: 200,
+      window_num: 4, table_num: 100, session_id: sessionId,
+    }),
+    credentials: 'include',
+  });
+  const acao = resp.headers.get('Access-Control-Allow-Origin');
+  if (!acao) throw new Error('缺少 Access-Control-Allow-Origin 头');
+}
+
+async function t13() {
+  const sessionId = crypto.randomUUID();
+  sessionIds.push(sessionId);
+  const params = {
+    dining_time: 20, meal_time: 5, max_people: 200,
+    window_num: 4, table_num: 100, session_id: sessionId,
+  };
+  const r1 = await apiPost('/api/start-simulation', params);
+  if (!r1.body.success) throw new Error('第一次启动失败');
+  const r2 = await apiPost('/api/start-simulation', params);
+  if (r2.body.success) throw new Error('重复启动应失败');
+}
+
+async function t14() {
+  const sessionId = crypto.randomUUID();
+  sessionIds.push(sessionId);
+  const r1 = await apiPost('/api/start-simulation', {
+    dining_time: 20, meal_time: 5, max_people: 200,
+    window_num: 4, table_num: 100, session_id: sessionId,
+  });
+  if (!r1.body.success) throw new Error('启动失败: ' + r1.body.msg);
+
+  await new Promise(r => setTimeout(r, 2000));
+
+  const r2 = await apiPost('/api/end-simulation', { session_id: sessionId });
+  if (!r2.body.success) throw new Error('结束失败: ' + r2.body.msg);
+  const d = r2.body.data;
+  if (!d.window_trend || d.window_trend.length < 2)
+    throw new Error(`趋势数据不足: ${d.window_trend?.length || 0} 条`);
+  if (d.window_evaluation === '无数据')
+    throw new Error('评价数据为空');
+  const sidIdx = sessionIds.indexOf(sessionId);
+  if (sidIdx >= 0) sessionIds.splice(sidIdx, 1);
+}
+
+async function t15() {
+  const r1 = await apiPost('/api/ai-analyze', {});
+  if (r1.body.success) throw new Error('空请求应失败');
+  const r2 = await apiPost('/api/ai-analyze', { api_key: 'k', payload: {} });
+  if (r2.body.success) throw new Error('缺少 api_url 应失败');
+  const r3 = await apiPost('/api/ai-analyze', { api_url: 'http://x', payload: {} });
+  if (r3.body.success) throw new Error('缺少 api_key 应失败');
+}
+
+// ========== 测试编排 ==========
+
+const testMap = { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15 };
+
+async function runAllTests() {
+  LOG.innerHTML = '';
+  log('🚀 开始运行全部测试...', 'info');
+  log(`📍 后端地址：${BASE()}`, 'info');
+  testResults = {};
+  sessionIds = [];
+  updateSummary();
+
+  const btn = document.getElementById('runAllBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 运行中...';
+
+  // 按顺序运行测试（t8/t11/t14 依赖先启动仿真）
+  const orderedTests = ['t1','t2','t3','t4','t5','t6','t7','t12','t13','t15','t9','t10','t8','t11','t14'];
+  for (const id of orderedTests) {
+    if (testMap[id]) await runTest(id, testMap[id]);
+  }
+
+  btn.disabled = false;
+  btn.textContent = '▶ 运行全部测试';
+
+  // 清理剩余的仿真
+  for (const sid of sessionIds) {
+    try { await apiPost('/api/end-simulation', { session_id: sid }); } catch (e) {}
+  }
+  sessionIds = [];
+
+  const pass = Object.values(testResults).filter(v => v === 'pass').length;
+  const fail = Object.values(testResults).filter(v => v === 'fail').length;
+  log(`\n🏁 测试完成：${pass} 通过 / ${fail} 失败 / ${pass+fail} 总计`, pass === pass+fail ? 'ok' : 'warn');
+}
+
+// ========== 初始化 ==========
+defineTests();
+updateSummary();
+log('📋 测试面板就绪。请确认后端已启动，然后点击「运行全部测试」。', 'info');
+log('💡 也可先点击「探测服务」检查后端是否可达。', 'info');
+</script>
+</body>
+</html>

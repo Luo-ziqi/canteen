@@ -1,0 +1,99 @@
+/* 深色主题 — 夜间模式 */
+:root[class~="theme-dark"] {
+    /* 品牌色系（保留蓝色系但略降低饱和度） */
+    --theme-primary: #7aa2f7;
+    --theme-primary-light: #8db3f8;
+    --theme-primary-dark: #5c8ce0;
+    --theme-primary-pale: #1a2540;
+
+    /* 功能色（深色背景上需提高饱和度） */
+    --theme-success: #68d391;
+    --theme-success-dark: #48bb78;
+    --theme-success-light: #1c3a2a;
+
+    --theme-error: #fc8181;
+    --theme-error-dark: #f56565;
+    --theme-error-light: #3a1c1c;
+
+    --theme-warning: #f6ad55;
+    --theme-warning-dark: #ed8936;
+    --theme-warning-light: #3a2e1c;
+
+    --theme-info: #63b3ed;
+    --theme-info-dark: #4299e1;
+    --theme-info-light: #1c2a3a;
+
+    /* ECharts 图表色系 — 霓虹色调 */
+    --chart-series-1: #7aa2f7;
+    --chart-series-2: #68d391;
+    --chart-series-3: #fc8181;
+    --chart-series-4: #f6ad55;
+    --chart-series-5: #63b3ed;
+    --chart-series-6: #b794f4;
+
+    /* 中性色 — 深色基底 */
+    --text-primary: #e0e0e0;
+    --text-regular: #b0b0b0;
+    --text-secondary: #808080;
+    --text-disabled: #555;
+
+    --bg-primary: #1a1a2e;
+    --bg-secondary: #16213e;
+    --bg-tertiary: #0f172a;
+
+    --border-light: #2a3a5c;
+    --border-regular: #3a4a6c;
+    --border-dark: #4a5a7c;
+}
+
+/* 深色主题下点阵改为亮色 */
+:root[class~="theme-dark"] body::before {
+    background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+    opacity: 1;
+}
+
+/* 深色主题下图表容器微调 */
+:root[class~="theme-dark"] .simulation__chart {
+    background: #1e2748;
+}
+
+:root[class~="theme-dark"] .sidebar {
+    background: #16213e;
+}
+
+:root[class~="theme-dark"] .sidebar__input,
+:root[class~="theme-dark"] .sidebar__textarea {
+    background: #1a2540;
+    color: #e0e0e0;
+    border-color: #2a3a5c;
+}
+
+:root[class~="theme-dark"] .sidebar__input:focus,
+:root[class~="theme-dark"] .sidebar__textarea:focus {
+    border-color: var(--theme-primary);
+    box-shadow: 0 0 0 3px rgba(122, 162, 247, 0.2);
+}
+
+:root[class~="theme-dark"] .toast {
+    background: #1e2748;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+:root[class~="theme-dark"] .context-menu {
+    background: #1e2748;
+    border-color: #2a3a5c;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+
+:root[class~="theme-dark"] .context-menu__item:hover {
+    background: #1a2540;
+}
+
+:root[class~="theme-dark"] .kpi-card {
+    background: #1e2748;
+}
+
+:root[class~="theme-dark"] .ai-result__container,
+:root[class~="theme-dark"] .ai-result__loading {
+    background: #1e2748;
+}

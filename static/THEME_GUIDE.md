@@ -79,13 +79,7 @@ static/
     --border-regular: #xxxxxx;
     --border-dark: #xxxxxx;
 
-    /* ========== 阴影（基于主题色） ========== */
-    --shadow-light: rgba(0, 0, 0, 0.1);
-    --shadow-regular: rgba(0, 0, 0, 0.15);
-    --shadow-medium: rgba(0, 0, 0, 0.2);
-    --shadow-strong: rgba(0, 0, 0, 0.25);
-    --shadow-hover: rgba(0, 0, 0, 0.3);
-    --shadow-active: rgba(0, 0, 0, 0.4);
+    /* ========== 阴影（建议使用中性灰，跟随 base.css 默认值即可） ========== */
 }
 ```
 
@@ -124,10 +118,10 @@ themes: [
 | `--theme-primary-light` | 悬停/高亮状态 | `#b8d0ff` |
 | `--theme-primary-dark` | 激活/按下状态 | `#94b3e6` |
 | `--theme-primary-pale` | 极浅背景装饰 | `#eef5ff` |
-| `--theme-success` | 成功/完成状态 | `#7ae8eb` |
-| `--theme-error` | 错误/危险状态 | `#c5d9ff` |
-| `--theme-warning` | 警告/注意状态 | `#ffe680` |
-| `--theme-info` | 信息提示状态 | `#a3cbca` |
+| `--theme-success` | 成功/完成状态 | `#68d391` |
+| `--theme-error` | 错误/危险状态 | `#fc8181` |
+| `--theme-warning` | 警告/注意状态 | `#f6ad55` |
+| `--theme-info` | 信息提示状态 | `#63b3ed` |
 | `--chart-series-N` (N=1~6) | ECharts 图表渐变色 | `#e1edff` ~ `#8fb3e6` |
 
 ### 可选变量（建议自定义）
@@ -137,7 +131,7 @@ themes: [
 | `--text-*` (primary/regular/secondary/disabled) | 文本颜色层次 |
 | `--bg-*` (primary/secondary/tertiary) | 背景色层次 |
 | `--border-*` (light/regular/dark) | 边框颜色层次 |
-| `--shadow-*` (light/regular/medium/strong/hover/active) | 阴影透明度 |
+| `--shadow-*` (light/regular/medium/strong/hover/active) | 阴影透明度（中性灰，无需跟随主题色） |
 
 ## 配色建议
 
@@ -180,8 +174,8 @@ themes: [
 
 ## 测试主题
 
-1. 启动服务：`cd static && python -m http.server 8080`
-2. 打开浏览器：`http://localhost:8080/html/simulation.html`
+1. 启动服务：`python app.py`
+2. 打开浏览器：`http://localhost:5000`
 3. 点击右上角「主题」下拉菜单查看可用主题
 4. 点击新主题应用并验证显示效果
 

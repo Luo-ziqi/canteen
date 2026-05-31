@@ -7,21 +7,21 @@
     --theme-primary-pale: #eef5ff;
 
     /* 功能色 */
-    --theme-success: #b8d0ff;
-    --theme-success-dark: #a9c6ff;
-    --theme-success-light: #d6e5ff;
+    --theme-success: #68d391;
+    --theme-success-dark: #48bb78;
+    --theme-success-light: #c6f6d5;
 
-    --theme-error: #c5d9ff;
-    --theme-error-dark: #b8d0ff;
-    --theme-error-light: #e1edff;
+    --theme-error: #fc8181;
+    --theme-error-dark: #f56565;
+    --theme-error-light: #fed7d7;
 
-    --theme-warning: #b8d0ff;
-    --theme-warning-dark: #a9c6ff;
-    --theme-warning-light: #d6e5ff;
+    --theme-warning: #f6ad55;
+    --theme-warning-dark: #ed8936;
+    --theme-warning-light: #feebc8;
 
-    --theme-info: #a9c6ff;
-    --theme-info-dark: #b8d0ff;
-    --theme-info-light: #c5d9ff;
+    --theme-info: #63b3ed;
+    --theme-info-dark: #4299e1;
+    --theme-info-light: #bee3f8;
 
     /* ECharts 图表色系 - 6 阶渐变 (调整为较深色调) */
     --chart-series-1: #c5d9ff;
@@ -44,12 +44,4 @@
     --border-light: #e1edff;
     --border-regular: #d6e5ff;
     --border-dark: #c5d9ff;
-
-    /* 阴影 */
-    --shadow-light: rgba(169, 198, 255, 0.1);
-    --shadow-regular: rgba(169, 198, 255, 0.15);
-    --shadow-medium: rgba(169, 198, 255, 0.2);
-    --shadow-strong: rgba(169, 198, 255, 0.25);
-    --shadow-hover: rgba(169, 198, 255, 0.3);
-    --shadow-active: rgba(169, 198, 255, 0.4);
 }

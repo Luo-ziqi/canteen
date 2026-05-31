@@ -136,8 +136,8 @@ class SimulationDatabase:
         try:
             self.cursor.execute(
                 """
-                SELECT window_num, table_num, dining_time, meal_time 
-                FROM simulation_info 
+                SELECT window_num, table_num, dining_time, meal_time
+                FROM simulation_info
                 WHERE id = ?
                 """,
                 (simulation_id,)
@@ -146,16 +146,40 @@ class SimulationDatabase:
             if not result:
                 logger.warning("未找到仿真ID=%s的信息", simulation_id)
                 return None
-            simulation_info = {
+            return {
                 "window_num": result[0],
                 "table_num": result[1],
                 "dining_time": result[2],
-                "meal_time": result[3]
+                "meal_time": result[3],
             }
-            logger.info("查询到仿真ID=%s的基础信息", simulation_id)
-            return simulation_info
         except sqlite3.Error as e:
             logger.error("按ID查询仿真信息失败：%s", str(e))
+            raise e
+
+    def get_simulation_info_by_session(self, session_id):
+        """按 session_id 查询最新一条仿真信息（忽略status，用于结束后查询）"""
+        try:
+            self.cursor.execute(
+                """
+                SELECT window_num, table_num, dining_time, meal_time, id
+                FROM simulation_info
+                WHERE session_id = ?
+                ORDER BY id DESC LIMIT 1
+                """,
+                (session_id,)
+            )
+            result = self.cursor.fetchone()
+            if not result:
+                return None
+            return {
+                "window_num": result[0],
+                "table_num": result[1],
+                "dining_time": result[2],
+                "meal_time": result[3],
+                "id": result[4],
+            }
+        except sqlite3.Error as e:
+            logger.error("按session查询仿真信息失败：%s", str(e))
             raise e
 
     def end_simulation(self, session_id):
@@ -250,5 +274,54 @@ class SimulationDatabase:
             self.conn.close()
             logger.info("数据库连接已关闭")
 
+    def cleanup_old_data(self, retention_days=7):
+        """清理早于 retention_days 天的旧仿真数据，防止数据库无限增长。"""
+        import random as _random
+        # 概率性触发（约 1/10 概率），避免每次启动都执行清理
+        if _random.random() > 0.1:
+            return
+
+        try:
+            self.cursor.execute(
+                "SELECT COUNT(*) FROM simulation_info WHERE status = 1"
+            )
+            total_completed = self.cursor.fetchone()[0]
+            logger.info("已完成仿真数：%d，正在检查过期数据（保留 %d 天）...",
+                         total_completed, retention_days)
+
+            self.cursor.execute(
+                """
+                DELETE FROM simulation_data
+                WHERE simulation_id IN (
+                    SELECT id FROM simulation_info
+                    WHERE status = 1
+                    AND datetime(end_time) < datetime('now', ?)
+                )
+                """,
+                (f'-{retention_days} days',)
+            )
+            deleted_data = self.cursor.rowcount
+
+            self.cursor.execute(
+                """
+                DELETE FROM simulation_info
+                WHERE status = 1
+                AND datetime(end_time) < datetime('now', ?)
+                """,
+                (f'-{retention_days} days',)
+            )
+            deleted_info = self.cursor.rowcount
+
+            self.conn.commit()
+            if deleted_info > 0:
+                logger.info("清理完成：删除 %d 条仿真记录、%d 条数据行",
+                             deleted_info, deleted_data)
+            else:
+                logger.info("无需清理，无过期数据")
+        except sqlite3.Error as e:
+            logger.error("数据清理失败：%s", str(e))
+            self.conn.rollback()
+
 # 初始化数据库实例（全局单例）
 db = SimulationDatabase()
+db.cleanup_old_data(retention_days=7)

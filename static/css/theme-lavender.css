@@ -1,55 +1,47 @@
-/* 薰衣草紫主题 */
+/* 薰衣草紫色系主题 */
 :root[class~="theme-lavender"] {
     /* 品牌色系 */
     --theme-primary: #b39ddb;
-    --theme-primary-light: #c5b1e6;
-    --theme-primary-dark: #9575cd;
-    --theme-primary-pale: #f3e5f5;
+    --theme-primary-light: #c5aedf;
+    --theme-primary-dark: #9c7bc7;
+    --theme-primary-pale: #f3eef8;
 
     /* 功能色 */
-    --theme-success: #c5b1e6;
-    --theme-success-dark: #b39ddb;
-    --theme-success-light: #e8dff5;
+    --theme-success: #81c784;
+    --theme-success-dark: #6ab36d;
+    --theme-success-light: #a5d6a7;
 
-    --theme-error: #ef9a9a;
-    --theme-error-dark: #e57373;
-    --theme-error-light: #fce4ec;
+    --theme-error: #e57373;
+    --theme-error-dark: #d35d5d;
+    --theme-error-light: #f09898;
 
-    --theme-warning: #ffe082;
-    --theme-warning-dark: #ffd54f;
-    --theme-warning-light: #fff8e1;
+    --theme-warning: #ffb74d;
+    --theme-warning-dark: #f0a335;
+    --theme-warning-light: #ffcc80;
 
-    --theme-info: #bae6fd;
-    --theme-info-dark: #91d5ff;
-    --theme-info-light: #e6f7ff;
+    --theme-info: #b39ddb;
+    --theme-info-dark: #9c7bc7;
+    --theme-info-light: #c5aedf;
 
-    /* ECharts 图表色系 - 6 阶渐变 (调整为较深色调) */
-    --chart-series-1: #d1c4e9;
-    --chart-series-2: #b39ddb;
-    --chart-series-3: #9575cd;
-    --chart-series-4: #7e57c2;
-    --chart-series-5: #673ab7;
-    --chart-series-6: #5e35b1;
+    /* ECharts 图表色系 - 6 阶渐变 */
+    --chart-series-1: #f3eef8;
+    --chart-series-2: #e8ddf0;
+    --chart-series-3: #ddcce8;
+    --chart-series-4: #b39ddb;
+    --chart-series-5: #9c7bc7;
+    --chart-series-6: #8566b3;
 
     /* 中性色 */
-    --text-primary: #4a3f5a;
-    --text-regular: #5d4e6b;
-    --text-secondary: #786585;
-    --text-disabled: #9c8ba5;
+    --text-primary: #2d3748;
+    --text-regular: #4a5568;
+    --text-secondary: #718096;
+    --text-disabled: #a0aec0;
 
-    --bg-primary: #f3e5f5;
-    --bg-secondary: #e8dff5;
-    --bg-tertiary: #d1c4e9;
+    --bg-primary: #faf7fd;
+    --bg-secondary: #f3eef8;
+    --bg-tertiary: #e8ddf0;
 
-    --border-light: #e8dff5;
-    --border-regular: #d1c4e9;
-    --border-dark: #b39ddb;
-
-    /* 阴影 */
-    --shadow-light: rgba(179, 157, 219, 0.1);
-    --shadow-regular: rgba(179, 157, 219, 0.15);
-    --shadow-medium: rgba(179, 157, 219, 0.2);
-    --shadow-strong: rgba(179, 157, 219, 0.25);
-    --shadow-hover: rgba(179, 157, 219, 0.3);
-    --shadow-active: rgba(179, 157, 219, 0.4);
+    --border-light: #f3eef8;
+    --border-regular: #e8ddf0;
+    --border-dark: #ddcce8;
 }
